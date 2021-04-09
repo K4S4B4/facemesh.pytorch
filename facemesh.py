@@ -111,18 +111,25 @@ class FaceMesh(nn.Module):
     def forward(self, x):
         # TFLite uses slightly different padding on the first conv layer
         # than PyTorch, so do it manually.
+
+        ##################################
+        x = x[:,:,:,[2, 1, 0]] # BRG to RGB
+        x = x.permute(0,3,1,2).float()
+        x = x / 127.5 - 1.0
+        ##################################
+
         x = nn.ReflectionPad2d((1, 0, 1, 0))(x)
-        b = x.shape[0]      # batch size, needed for reshaping later
+        #b = x.shape[0]      # batch size, needed for reshaping later
 
         x = self.backbone(x)            # (b, 128, 6, 6)
         
         c = self.conf_head(x)           # (b, 1, 1, 1)
-        c = c.view(b, -1)               # (b, 1)
+        c = c.view(-1)                  # (b)
         
         r = self.coord_head(x)          # (b, 1404, 1, 1)
-        r = r.reshape(b, -1)            # (b, 1404)
+        r = r.reshape(-1, 468, 3)        # (b, 468, 3)
         
-        return [r, c]
+        return r, c
 
     def _device(self):
         """Which device (CPU or GPU) is being used by this model?"""
