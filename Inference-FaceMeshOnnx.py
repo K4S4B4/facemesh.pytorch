@@ -109,8 +109,6 @@ while hasFrame:
     img1, img2, scale, pad = resize_pad(frame)
     img = cv2.resize(img1, (192,192))
 
-    #img = cv2.imread("test_eye.jpg")
-    #img = cv2.resize(img, (64, 64))
     img_in = np.expand_dims(img, axis=0).astype(np.uint8)
     ort_inputs = {input_name: img_in}
 
@@ -120,22 +118,12 @@ while hasFrame:
     if flag>.5:
         draw_landmarks(img1, landmark[:,:2] * 2.6666, FACE_CONNECTIONS, size=1)
 
-    # left eye visibi
-    x1 = landmark[243, 0] - landmark[130, 0]
-    y1 = landmark[243, 1] - landmark[130, 1]
-    z1 = landmark[243, 2] - landmark[130, 2]
-
+    ## left eye visibi
+    #x1 = landmark[243, 0] - landmark[130, 0]
+    #y1 = landmark[243, 1] - landmark[130, 1]
+    #z1 = landmark[243, 2] - landmark[130, 2]
 
     cv2.imshow(WINDOW, img1)
     cv2.waitKey(1)
 
     hasFrame, frame = capture.read()
-
-#torch.onnx.export(
-#    net, 
-#    (torch.randn(1,3,64,64, device=gpu), ), 
-#    "irislandmarks.onnx",
-#    input_names=("image", ),
-#    output_names=("preds", "conf"),
-#    opset_version=9
-#)
