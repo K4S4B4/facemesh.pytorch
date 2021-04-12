@@ -105,6 +105,8 @@ cv2.namedWindow(WINDOW)
 capture = cv2.VideoCapture(2)
 hasFrame, frame = capture.read()
 
+eyeImgSize = 25
+
 while hasFrame:
     img1, img2, scale, pad = resize_pad(frame)
     img = cv2.resize(img1, (192,192))
@@ -119,9 +121,15 @@ while hasFrame:
         draw_landmarks(img1, landmark[:,:2] * 2.6666, FACE_CONNECTIONS, size=1)
 
     ## left eye visibi
-    #x1 = landmark[243, 0] - landmark[130, 0]
-    #y1 = landmark[243, 1] - landmark[130, 1]
-    #z1 = landmark[243, 2] - landmark[130, 2]
+    eyeCenterL = (landmark[386] + landmark[374]) / 2
+    eyeCenterR = (landmark[145] + landmark[159]) / 2
+
+    cv2.circle(img1, (int(eyeCenterL[0] * 2.6666), int(eyeCenterL[1] * 2.6666)), 5, (0,255,255), -1)
+    cv2.circle(img1, (int(eyeCenterR[0] * 2.6666), int(eyeCenterR[1] * 2.6666)), 5, (0,255,255), -1)
+
+    if (eyeCenterL[0] > eyeImgSize and eyeCenterL[1] > eyeImgSize and eyeCenterL[0] < 192-eyeImgSize and eyeCenterL[1] < 192-eyeImgSize ): 
+        imgL = img[int(eyeCenterL[1] - eyeImgSize + 1):int(eyeCenterL[1]+eyeImgSize), int(eyeCenterL[0] - eyeImgSize + 1):int(eyeCenterL[0]+eyeImgSize), :]
+        cv2.imshow("eyeL", imgL)
 
     cv2.imshow(WINDOW, img1)
     cv2.waitKey(1)
