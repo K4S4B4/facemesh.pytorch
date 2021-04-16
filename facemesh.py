@@ -96,9 +96,10 @@ class FaceMesh(nn.Module):
             FaceMeshBlock(128, 128),
             nn.Conv2d(128, 32, 1),
             nn.PReLU(32),
-            FaceMeshBlock(32, 32),
-            nn.Conv2d(32, 1404, 3)
+            FaceMeshBlock(32, 32)#,
+            #nn.Conv2d(32, 1404, 3)
         )
+        self.coord_head2 = nn.Conv2d(32, 1404, 3)
         
         self.conf_head = nn.Sequential(
             FaceMeshBlock(128, 128, stride=2),
@@ -126,17 +127,24 @@ class FaceMesh(nn.Module):
         c = self.conf_head(x)           # (b, 1, 1, 1)
         c = c.view(-1)                  # (b)
         
-        r = self.coord_head(x)          # (b, 1404, 1, 1)
+        features = self.coord_head(x)    # (b, 1404, 1, 1)
+        r = self.coord_head2(features)   # (b, 32, 3, 3)
         r = r.reshape(-1, 468, 3)        # (b, 468, 3)
-        
-        return r, c
+
+        return r, c, features
 
     def _device(self):
         """Which device (CPU or GPU) is being used by this model?"""
         return self.conf_head[1].weight.device
     
     def load_weights(self, path):
-        self.load_state_dict(torch.load(path))
+        state_dict = torch.load(path)
+
+        for key in list(state_dict.keys()):
+            new_key = key.replace("coord_head.6.", "coord_head2.")
+            state_dict[new_key] = state_dict.pop(key)
+
+        self.load_state_dict(state_dict)
         self.eval()        
     
     def _preprocess(self, x):

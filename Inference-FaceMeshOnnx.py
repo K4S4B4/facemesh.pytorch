@@ -93,6 +93,7 @@ def draw_landmarks(img, points, connections=[], color=(0, 255, 0), size=2):
         cv2.line(img, (x0, y0), (x1, y1), (0,0,0), size)
 
 onnx_file_name = 'resource/MediaPipe/BlazeFace_B_192_192_BGRxByte.onnx'
+onnx_file_name = 'BlazeFaceFeaturemap_1_192_192_BGRxByte.onnx'
 sess_options = onnxruntime.SessionOptions()
 sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
 #sess_options.enable_profiling = True
@@ -116,9 +117,13 @@ while hasFrame:
 
     ort_outs = ort_session.run(None, ort_inputs)
 
-    landmark, flag = ort_outs[0][0], ort_outs[1][0]
+    landmark, flag, features = ort_outs[0][0], ort_outs[1][0], ort_outs[2][0]
     if flag>.5:
         draw_landmarks(img1, landmark[:,:2] * 2.6666, FACE_CONNECTIONS, size=1)
+
+    featConcat = np.concatenate(features)
+    #for i in range(32):
+    #    featConcat = np.concatenate(featConcat, features[i])
 
     ## left eye visibi
     eyeCenterL = (landmark[386] + landmark[374]) / 2
@@ -132,6 +137,10 @@ while hasFrame:
         cv2.imshow("eyeL", imgL)
 
     cv2.imshow(WINDOW, img1)
+
+    featConcat = cv2.resize(featConcat,(3*15, 96*5))
+    max = np.max(featConcat)
+    cv2.imshow("feat", featConcat / max)
     cv2.waitKey(1)
 
     hasFrame, frame = capture.read()
