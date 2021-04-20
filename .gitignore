@@ -128,3 +128,15 @@ dmypy.json
 # Pyre type checker
 .pyre/
 *.json
+env1/Scripts/pythonw.exe
+env1/Scripts/python.exe
+env1/Scripts/pip3.exe
+env1/Scripts/pip3.7.exe
+env1/Scripts/pip.exe
+env1/Scripts/easy_install.exe
+env1/Scripts/easy_install-3.7.exe
+env1/Scripts/deactivate.bat
+env1/Scripts/Activate.ps1
+env1/Scripts/activate.bat
+env1/Scripts/activate
+env1/pyvenv.cfg

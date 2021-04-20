@@ -18,15 +18,17 @@ class OffsetToTexture(nn.Module):
             masks.append(mask)
 
         masks = np.array(masks)
-        self.maskTensor = torch.from_numpy(masks).float().unsqueeze(3) / 255 #(468, H, W, 1)
+        self.maskTensor = torch.from_numpy(masks).float().unsqueeze(3).expand(468, 512, 512, 3) / 255 #(468, H, W, 3)
+        #self.maskTensor = torch.from_numpy(masks).float().unsqueeze(3) / 255 #(468, H, W, 1)
+        self.maskTensorNonZero = torch.nonzero(self.maskTensor, as_tuple=True)
 
     # input: (468, 3)
     def forward(self, input):
-        input = input.unsqueeze(1).unsqueeze(1) #(468, 1, 1, 3)
-        x = input * self.maskTensor #(468, H, W, 3)
-        output = x.sum(0) #(H, W, 3)
+        input = input.unsqueeze(1).unsqueeze(1).expand(468, 512, 512, 3) #(468, 1, 1, 3)
+        output = torch.zeros(468, 512, 512, 3)
+        output[self.maskTensorNonZero] = self.maskTensor[self.maskTensorNonZero] * input[self.maskTensorNonZero]
+        output = output.sum(0) #(H, W, 3)
         return output
-
 
 def makeInputNumpy(numOfMasks):
     input = []
