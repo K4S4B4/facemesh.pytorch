@@ -27,9 +27,15 @@ i = 0
 for p in mesh:
     img = base_image.copy()
     p = p.astype(int)
-    img = cv2.circle(img, tuple(p), 10, (255, 255, 255), -1)
+
+    size = [10,9,8,7,6,5,4,3,2,1]
+    grayBase = 255 / 10
+    for j in range(10):
+        gray = int(grayBase * j)
+        img = cv2.circle(img, tuple(p), size[j], (gray, gray, gray), -1)
+
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite("facialMasks/facialMask"+str(i)+".jpg", img_gray)
+    cv2.imwrite("facialMasks/facialMask"+str(i)+".png", img_gray, [int(cv2.IMWRITE_PNG_COMPRESSION), 9])
     i = i + 1
 
     cv2.imshow("test", img)

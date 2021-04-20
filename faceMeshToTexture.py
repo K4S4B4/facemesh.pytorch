@@ -10,24 +10,25 @@ class OffsetToTexture(nn.Module):
         super(OffsetToTexture, self).__init__()
 
         self.numOfMasks = 468
+        self.sizeOfMasks = 192
         masks = []
 
         for i in range(self.numOfMasks):
-            mask = cv2.imread("resource/facialMasks/facialMask" + str(i) + ".jpg")
+            mask = cv2.imread("resource/facialMasks/facialMask" + str(i) + ".png")
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
             masks.append(mask)
 
         masks = np.array(masks)
-        self.maskTensor = torch.from_numpy(masks).float().unsqueeze(3).expand(468, 512, 512, 3) / 255 #(468, H, W, 3)
+        self.maskTensor = torch.from_numpy(masks).float().unsqueeze(3).expand(self.numOfMasks, self.sizeOfMasks, self.sizeOfMasks, 3) / 255 #(468, H, W, 3)
         #self.maskTensor = torch.from_numpy(masks).float().unsqueeze(3) / 255 #(468, H, W, 1)
         self.maskTensorNonZero = torch.nonzero(self.maskTensor, as_tuple=True)
 
     # input: (468, 3)
     def forward(self, input):
-        input = input.unsqueeze(1).unsqueeze(1).expand(468, 512, 512, 3) #(468, 1, 1, 3)
-        output = torch.zeros(468, 512, 512, 3)
-        output[self.maskTensorNonZero] = self.maskTensor[self.maskTensorNonZero] * input[self.maskTensorNonZero]
-        output = output.sum(0) #(H, W, 3)
+        input = input.unsqueeze(1).unsqueeze(1).expand(self.numOfMasks, self.sizeOfMasks, self.sizeOfMasks, 3) #(468, 1, 1, 3)
+        multiplied = torch.zeros(self.numOfMasks, self.sizeOfMasks, self.sizeOfMasks, 3)
+        multiplied[self.maskTensorNonZero] = self.maskTensor[self.maskTensorNonZero] * input[self.maskTensorNonZero]
+        output = multiplied.sum(0) #(H, W, 3)
         return output
 
 def makeInputNumpy(numOfMasks):
@@ -51,6 +52,7 @@ def test():
     output = model(input)
 
     output_np = output.to('cpu').detach().numpy().copy()
+    output_np = cv2.resize(output_np, (512,512))
     cv2.imshow("test", output_np)
     cv2.waitKey(0)
 
@@ -92,6 +94,6 @@ def testOnnx():
     cv2.imshow("test", ort_outs[0])
     cv2.waitKey(0)
 
-#test()
-#createOnnx()
-testOnnx()
+test()
+createOnnx()
+#testOnnx()
