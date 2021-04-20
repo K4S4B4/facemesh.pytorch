@@ -28,8 +28,10 @@ class OffsetToTexture(nn.Module):
         input = input.unsqueeze(1).unsqueeze(1).expand(self.numOfMasks, self.sizeOfMasks, self.sizeOfMasks, 3) #(468, 1, 1, 3)
         multiplied = torch.zeros(self.numOfMasks, self.sizeOfMasks, self.sizeOfMasks, 3)
         multiplied[self.maskTensorNonZero] = self.maskTensor[self.maskTensorNonZero] * input[self.maskTensorNonZero]
-        output = multiplied.sum(0) #(H, W, 3)
-        return output
+        RGB = multiplied.sum(0) #(H, W, 3)
+        A = torch.ones(self.sizeOfMasks, self.sizeOfMasks, 1)
+        RGBA = torch.cat((RGB,A),2)
+        return RGBA
 
 def makeInputNumpy(numOfMasks):
     input = []
