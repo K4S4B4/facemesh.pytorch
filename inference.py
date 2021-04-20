@@ -19,6 +19,7 @@ gpu = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.set_grad_enabled(False)
 
 model = facemeshFeatParam()
+model.eval()
 
 ########################
 ## FaceDetection
@@ -94,9 +95,6 @@ while hasFrame:
     hasFrame, frame = capture.read()
     key = cv2.waitKey(1)
 
-features_np = np.array(featureList)
-print(features_np.shape)
-np.save('C:/temp/features1.npy', features_np)
 
 cv2.destroyAllWindows()
 

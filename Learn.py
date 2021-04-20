@@ -5,7 +5,11 @@ import torch
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 import glob
-from FeatToParam import FeatToParam
+from FeatToParam import FeatToParam, CoordToParam
+
+gpu = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#lossWeight = torch.tensor([30,30,30,30,30, 30,30,30,30,30, 30,30,30,30,30, 30,30,30,30,30, 30,30,30,30,30, 30,30,30,30,30, 1,1,1,1]).to(gpu)
+#lossWeight = torch.tensor([1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 0.0333,0.0333,0.0333,0.0333]).to(gpu)
 
 def train_step(train_X, train_y):
     # 訓練モードに設定
@@ -19,6 +23,7 @@ def train_step(train_X, train_y):
     # 出力結果と正解ラベルから損失を計算し、勾配を求める
     optimizer.zero_grad()   # 勾配を0で初期化（※累積してしまうため要注意）
     loss = criterion(pred_y, train_y)     # 誤差（出力結果と正解ラベルの差）から損失を取得
+    #loss = criterion(pred_y * lossWeight, train_y * lossWeight)     # 誤差（出力結果と正解ラベルの差）から損失を取得
     loss.backward()   # 逆伝播の処理として勾配を計算（自動微分）
 
     # 勾配を使ってパラメーター（重みとバイアス）を更新
@@ -37,23 +42,29 @@ def valid_step(valid_X, valid_y):
 
     # 出力結果と正解ラベルから損失を計算
     loss = criterion(pred_y, valid_y)     # 誤差（出力結果と正解ラベルの差）から損失を取得
+    #loss = criterion(pred_y * lossWeight, valid_y * lossWeight)     # 誤差（出力結果と正解ラベルの差）から損失を取得
 
     # 損失を返す
     return loss.item()  # ※item()=Pythonの数値
 
-gpu = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model = FeatToParam().to(gpu)
+#model = FeatToParam().to(gpu)
+model = CoordToParam().to(gpu)
+
 # パラメーター（重みやバイアス）の初期化を行う
 #torch.nn.init.xavier_uniform(model.coord_head2.weight)
-state_dict = torch.load("model2.pth")
-model.load_state_dict(state_dict)
+#state_dict = torch.load("model3_b256_L0.001_Adam_E5.pth")
+#model.load_state_dict(state_dict)
 
 # 定数（学習方法設計時に必要となるもの）
-LEARNING_RATE = 0.005   # 学習率： 0.03
-REGULARIZATION = 0  # 正則化率： 0.03
+LEARNING_RATE = 0.001   # 学習率： 0.03
+REGULARIZATION = 0.001  # 正則化率： 0.03
 
 # オプティマイザを作成（パラメーターと学習率も指定）
-optimizer = optim.SGD(           # 最適化アルゴリズムに「SGD」を選択
+#optimizer = optim.SGD(           # 最適化アルゴリズムに「SGD」を選択
+#    model.parameters(),          # 最適化で更新対象のパラメーター（重みやバイアス）
+#    lr=LEARNING_RATE,            # 更新時の学習率
+#    weight_decay=REGULARIZATION) # L2正則化（※不要な場合は0か省略）
+optimizer = optim.AdamW(           # 最適化アルゴリズムに「SGD」を選択
     model.parameters(),          # 最適化で更新対象のパラメーター（重みやバイアス）
     lr=LEARNING_RATE,            # 更新時の学習率
     weight_decay=REGULARIZATION) # L2正則化（※不要な場合は0か省略）
@@ -65,17 +76,15 @@ criterion = torch.nn.MSELoss()  # 損失関数：平均二乗誤差
 ## Input images
 ########################
 # 定数（学習方法設計時に必要となるもの）
-BATCH_SIZE = 128  # バッチサイズ： 15（Playgroundの選択肢は「1」～「30」）
-gpu = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+BATCH_SIZE = 1  # バッチサイズ： 15（Playgroundの選択肢は「1」～「30」）
 
 # NumPy多次元配列からテンソルに変換し、データ型はfloatに変換する
-features = np.load('C:/temp/features1.npy')
-params = np.loadtxt('C:/temp/data1.txt', delimiter=',')
+features = np.load('C:/temp/landmraksv4_1.npy')
+params = np.loadtxt('C:/temp/param_V4_1.txt', delimiter=',')
 t_X_train = torch.from_numpy(features).float().to(gpu)
 t_y_train = torch.from_numpy(params).float().to(gpu)
-X_valid = np.load('C:/temp/features0.npy')
-y_valid = np.loadtxt('C:/temp/data0.txt', delimiter=',')
+X_valid = np.load('C:/temp/landmraksv4_0.npy')
+y_valid = np.loadtxt('C:/temp/param_V4_0.txt', delimiter=',')
 t_X_valid = torch.from_numpy(X_valid).float().to(gpu)
 t_y_valid = torch.from_numpy(y_valid).float().to(gpu)
 
@@ -114,26 +123,32 @@ for epoch in range(EPOCHS):
     total_train = 0      # 「訓練」時における累計「データ数」
     total_valid = 0      # 「評価」時における累計「データ数」
 
+    nt = 0
     for train_X, train_y in loader_train:
         # 【重要】1ミニバッチ分の「訓練」を実行
-        loss = train_step(train_X, train_y)
+        loss = train_step(train_X, train_y) # / BATCH_SIZE
 
         # 取得した損失値と正解率を累計値側に足していく
         total_loss += loss          # 訓練用の累計損失値
         total_train += len(train_y) # 訓練データの累計数
+
+        nt = nt + 1
             
+    nv = 0
     for valid_X, valid_y in loader_valid:
         # 【重要】1ミニバッチ分の「評価（精度検証）」を実行
-        val_loss = valid_step(valid_X, valid_y)
+        val_loss = valid_step(valid_X, valid_y) #/ BATCH_SIZE
 
         # 取得した損失値と正解率を累計値側に足していく
         total_val_loss += val_loss  # 評価用の累計損失値
         total_valid += len(valid_y) # 訓練データの累計数
 
+        nv = nv + 1
+
     # ミニバッチ単位で累計してきた損失値や正解率の平均を取る
     n = epoch + 1                             # 処理済みのエポック数
-    avg_loss = total_loss #/ n                 # 訓練用の平均損失値
-    avg_val_loss = total_val_loss #/ n         # 訓練用の平均損失値
+    avg_loss = total_loss / nt                 # 訓練用の平均損失値
+    avg_val_loss = total_val_loss / nv         # 訓練用の平均損失値
 
     # グラフ描画のために損失の履歴を保存する
     train_history.append(avg_loss)
@@ -149,4 +164,4 @@ for epoch in range(EPOCHS):
 print('Finished Training')
 print(model.state_dict())  # 学習後のパラメーターの情報を表示
 
-torch.save(model.state_dict(), "model3.pth")
+torch.save(model.state_dict(), "model3_b32_L0.0001_Adam_E1.pth")

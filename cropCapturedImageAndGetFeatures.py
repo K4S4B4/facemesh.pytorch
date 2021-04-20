@@ -11,6 +11,8 @@ from blazeface_landmark import BlazeFaceLandmark
 
 from visualization import draw_detections, draw_landmarks, draw_roi, HAND_CONNECTIONS, FACE_CONNECTIONS
 
+from facemesh import FaceMesh
+
 import onnxruntime
 
 gpu = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -41,10 +43,16 @@ ort_session = onnxruntime.InferenceSession(onnx_file_name, sess_options)
 input_name = ort_session.get_inputs()[0].name
 
 ########################
+## FaceLandmark torch
+########################
+#facemeshBase = FaceMesh()
+#facemeshBase.load_weights("facemesh.pth")
+
+########################
 ## Input images
 ########################
 #files =glob.glob("C:\\Users\\user\\Documents\\GitHub\\Pose2d\\Saved\\VideoCaptures\\*")
-files =glob.glob("C:/Users/user/Documents/GitHub/Pose3d/Saved/VideoCaptures/*.jpg")
+files =glob.glob("C:/Users/user/Documents/GitHub/Pose3d/Saved/VideoCaptures_V4_1/*.jpg")
 
 featureList = []
 
@@ -62,14 +70,18 @@ for fname in files:    #あとはForで1ファイルずつ実行されていく
 
     ### landmark detection
     img_in = img.to('cpu').detach().numpy().copy().astype(np.uint8)
-
     #cv2.imwrite("C:\\temp\\img\\" + os.path.basename(fname), img_in[0])
-
     ort_inputs = {input_name: img_in}
     ort_outs = ort_session.run(None, ort_inputs)
     landmark, flag, features = ort_outs[0][0], ort_outs[1][0], ort_outs[2][0]
 
-    featureList.append(features)
+    #### landmark detection
+    #landmark, flag, features = facemeshBase(img)
+    #landmark = landmark[0]
+    #flag = flag[0]
+    #features = features[0]
+
+    featureList.append(landmark)
 
     #if flag>.5:
     #    draw_landmarks(img_in[0], landmark[:,:2], FACE_CONNECTIONS, size=1)
@@ -83,7 +95,7 @@ for fname in files:    #あとはForで1ファイルずつ実行されていく
 
 features_np = np.array(featureList)
 print(features_np.shape)
-np.save('C:/temp/features1.npy', features_np)
+np.save('C:/temp/landmraksv4_1.npy', features_np)
 
 cv2.destroyAllWindows()
 

@@ -1,9 +1,9 @@
-import torch       # ƒ‰ƒCƒuƒ‰ƒŠuPyTorchv‚ÌtorchƒpƒbƒP[ƒW‚ğƒCƒ“ƒ|[ƒg
-import torch.nn as nn  # uƒjƒ…[ƒ‰ƒ‹ƒlƒbƒgƒ[ƒNvƒ‚ƒWƒ…[ƒ‹‚Ì•Ê–¼’è‹`
+import torch       # ï¿½ï¿½ï¿½Cï¿½uï¿½ï¿½ï¿½ï¿½ï¿½uPyTorchï¿½vï¿½ï¿½torchï¿½pï¿½bï¿½Pï¿½[ï¿½Wï¿½ï¿½Cï¿½ï¿½ï¿½|ï¿½[ï¿½g
+import torch.nn as nn  # ï¿½uï¿½jï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½lï¿½bï¿½gï¿½ï¿½ï¿½[ï¿½Nï¿½vï¿½ï¿½ï¿½Wï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Ì•Ê–ï¿½ï¿½ï¿½`
 from facemesh import FaceMesh
 from FeatToParam import FeatToParam
 
-# utorch.nn.ModuleƒNƒ‰ƒX‚ÌƒTƒuƒNƒ‰ƒX‰»v‚É‚æ‚éƒ‚ƒfƒ‹‚Ì’è‹`
+# ï¿½utorch.nn.Moduleï¿½Nï¿½ï¿½ï¿½Xï¿½ÌƒTï¿½uï¿½Nï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½vï¿½É‚ï¿½éƒ‚ï¿½fï¿½ï¿½ï¿½Ì’ï¿½`
 class facemeshFeatParam(nn.Module):
     def __init__(self):
         super(facemeshFeatParam, self).__init__()
@@ -12,7 +12,7 @@ class facemeshFeatParam(nn.Module):
         self.facemeshBase.load_weights("facemesh.pth")
 
         self.featureToParam = FeatToParam()
-        self.featureToParam.load_weights("model2.pth")
+        self.featureToParam.load_weights("model3_b256_L0.001_Adam_E5.pth")
 
     def forward(self, input):
         r, c, features = self.facemeshBase(input)

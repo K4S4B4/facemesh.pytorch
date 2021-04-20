@@ -95,11 +95,15 @@ class FaceMesh(nn.Module):
             FaceMeshBlock(128, 128),
             FaceMeshBlock(128, 128),
             nn.Conv2d(128, 32, 1),
-            nn.PReLU(32),
-            FaceMeshBlock(32, 32)#,
+            nn.PReLU(32)#,
+            #FaceMeshBlock(32, 32),
             #nn.Conv2d(32, 1404, 3)
         )
-        self.coord_head2 = nn.Conv2d(32, 1404, 3)
+
+        self.coord_head2 = nn.Sequential(
+            FaceMeshBlock(32, 32),
+            nn.Conv2d(32, 1404, 3)
+        )
         
         self.conf_head = nn.Sequential(
             FaceMeshBlock(128, 128, stride=2),
@@ -141,7 +145,8 @@ class FaceMesh(nn.Module):
         state_dict = torch.load(path)
 
         for key in list(state_dict.keys()):
-            new_key = key.replace("coord_head.6.", "coord_head2.")
+            new_key = key.replace("coord_head.5.", "coord_head2.0.")
+            new_key = new_key.replace("coord_head.6.", "coord_head2.1.")
             state_dict[new_key] = state_dict.pop(key)
 
         self.load_state_dict(state_dict)
